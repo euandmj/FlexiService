@@ -1,0 +1,33 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "flexiservice";
+
+package flexiservice;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/empty.proto";
+//import "google/protobuf/oneof.proto";
+
+service FlexiService {
+	rpc SendMessage(FlexiRequest) returns (FlexiResponse);
+}
+
+
+
+message FlexiRequest {
+	string Target = 1;
+	oneof Payload {
+		string JSON = 2;
+		google.protobuf.Any Any = 3;		
+	}
+}
+
+message FlexiResponse {
+	string JSON = 1;
+}
+
+message ExampleMessage {
+	string FirstName = 1;
+	string LastName = 2;
+}
+
