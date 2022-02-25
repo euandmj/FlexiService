@@ -1,4 +1,7 @@
 ﻿using flexiservice;
+using Google.Protobuf;
+using OneOf;
+using System.Text.Json;
 
 namespace core.Tests;
 
@@ -13,18 +16,20 @@ public class FlexiHandlerBuilderTests
     public void Foo()
     {
 
+
+
         var builder = new FlexiHandlerBuilder();
 
-        builder.Generate(typeof(Example));
+        builder.AddType(typeof(Example));
 
 
-        var val = builder.DelegateMap.First().Value;
+        var val = builder.Build().First().Value;
 
-        val(new FlexiRequest());
+        val.Delegate(new FlexiRequest());
     }
 
 
-    [FlexiHandlerFixture]
+    [FlexiHandlerFixture(FlexiFixtureScope.LifetimePerScope)]
     private class Example
     {
         public interface IFooService
@@ -32,18 +37,35 @@ public class FlexiHandlerBuilderTests
             void Do();
         }
 
-        [FlexiHandler("handler1", FlexiHandlerScope.Lifetime)]
-        public FlexiResponse HandlerFoo(FlexiRequest request)
+        public Example()
         {
-            return new FlexiResponse();
+
         }
 
-        [FlexiHandler("handler1", FlexiHandlerScope.Lifetime)]
-        public FlexiResponse HandlerFooWithParams(FlexiRequest request, IFooService svc)
+        [FlexiHandler("handler1")]
+        public OneOf<object, IMessage> HandlerJson(OneOf<string, IMessage> json)
         {
-            svc.Do();
-            return new FlexiResponse();
+
+
+            return "";
+
         }
+
+        [FlexiHandler("handler2")]
+        public OneOf<object, IMessage> HandlerJson2(OneOf<string, IMessage> json)
+        {
+
+
+            return "";
+
+        }
+
+        //[FlexiHandler("handler1", FlexiHandlerScope.Lifetime)]
+        //public FlexiResponse HandlerFooWithParams(FlexiRequest request, IFooService svc)
+        //{
+        //    svc.Do();
+        //    return new FlexiResponse();
+        //}
 
     }
 }

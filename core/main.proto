@@ -23,7 +23,10 @@ message FlexiRequest {
 }
 
 message FlexiResponse {
-	string JSON = 1;
+	oneof Payload {
+		string JSON = 1;
+		google.protobuf.Any Any = 2;		
+	}
 }
 
 message ExampleMessage {

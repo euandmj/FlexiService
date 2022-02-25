@@ -1,4 +1,5 @@
-﻿using flexiservice;
+﻿using Google.Protobuf;
+using OneOf;
 
 namespace core;
 
@@ -6,29 +7,40 @@ namespace core;
 public sealed class FlexiHandlerAttribute : Attribute
 {
     public string HandlerName { get; }
-    public FlexiHandlerScope Scope { get; }
+    //public FlexiHandlerScope Scope { get; }
 
-    public FlexiHandlerAttribute(
-        string handlerName,
-        FlexiHandlerScope scope)
+    public FlexiHandlerAttribute(string handlerName)
     {
         HandlerName = handlerName;
-        Scope = scope;
+        //Scope = scope;
     }
 }
 
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public sealed class FlexiHandlerFixture : Attribute
 {
+    public FlexiFixtureScope Scope { get; }
+    public FlexiHandlerFixture(FlexiFixtureScope scope = FlexiFixtureScope.PerInstance) => Scope = scope;
 }
 
 public enum FlexiHandlerScope
 {
-    Singleton,
-    Lifetime
+
 }
 
-//public delegate FlexiResponse FlexiHandlerDelegate<T>(OneOf<string, T> request);
-public delegate FlexiResponse FlexiHandlerDelegate(FlexiRequest request);
+public enum FlexiFixtureScope
+{
+    /// <summary>
+    /// Instances should be reused within the scope of the type
+    /// </summary>
+    LifetimePerScope,
+    /// <summary>
+    /// Instances should be newed up per delgate handler.
+    /// </summary>
+    PerInstance
+}
+
+public delegate OneOf<object, IMessage> FlexiHandlerDelegate(OneOf<string, IMessage> request);
+//public delegate FlexiResponse FlexiHandlerDelegate(FlexiRequest request);
 
 

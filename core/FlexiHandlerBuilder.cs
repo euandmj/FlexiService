@@ -1,82 +1,130 @@
-﻿using flexiservice;
-using System.Reflection;
+﻿using System.Reflection;
 
 namespace core
 {
+    public struct FlexiHandlerSite : IDisposable
+    {
+        public object Instance;
+        public FlexiHandlerDelegate Delegate;
+
+        public void Dispose()
+        {
+            if (Instance is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+        }
+    }
+
     public class FlexiHandlerBuilder
     {
-        public IDictionary<string, FlexiHandlerDelegate> DelegateMap { get; }
-
+        private readonly IDictionary<string, FlexiHandlerSite> _delegateMap;
+        private readonly HashSet<Assembly> _assemblies = new();
+        private readonly HashSet<Type> _types = new();
 
         public FlexiHandlerBuilder()
         {
-            DelegateMap = new Dictionary<string, FlexiHandlerDelegate>();
+            _delegateMap = new Dictionary<string, FlexiHandlerSite>();
         }
 
 
         private static void ValidateMethod(MethodInfo method)
         {
-            if (method.ReturnType != typeof(FlexiResponse))
+            if (method.IsAbstract)
             {
-                throw new InvalidProgramException(
-                    "Return value must be of type FlexiMessage");
+                throw new ArgumentException("method cannot be abstract");
             }
-            var parameters = method.GetParameters();
-
-            if (parameters.Length == 0)
+            if (method.IsStatic)
             {
-                throw new InvalidProgramException(
-                    "FlexiHandler must have one param");
+                // Static vs non static delegate sites
             }
-            if (parameters[0].ParameterType != typeof(FlexiRequest))
+            if (method.DeclaringType is null)
             {
-                throw new InvalidProgramException(
-                    "First parameter must be of type FlexiMessage");
+                throw new ArgumentException("Declaring type cannot be null", nameof(method));
             }
         }
 
-        private static FlexiHandlerDelegate GetDelegate(MethodInfo method)
+        private static FlexiHandlerDelegate GetDelegate(MethodInfo method, ref object? instance)
         {
-            if (method.DeclaringType is null)
+            instance ??= Activator.CreateInstance(method.DeclaringType!);
+
+            if (instance is null)
             {
-                throw new ArgumentNullException(nameof(method));
+                throw new Exception("instance cannot be null");
             }
-            return Delegate.CreateDelegate(
+
+            var target = Delegate.CreateDelegate(
                 typeof(FlexiHandlerDelegate),
-                Activator.CreateInstance(method.DeclaringType),
+                instance,
                 method) as FlexiHandlerDelegate ?? throw new InvalidProgramException($"Failed to create delegate from {method}");
+
+            return target;
+        }
+
+        private object? GetSuitableInstance(FlexiFixtureScope scope, object? localCache)
+        {
+            return scope switch
+            {
+                FlexiFixtureScope.PerInstance => null,
+                FlexiFixtureScope.LifetimePerScope => localCache,
+                _ => throw new ArgumentException("invalid scope", nameof(scope))
+            };
         }
 
         private void GenerateFromType(Type type)
         {
+            var attribute = type.GetCustomAttribute<FlexiHandlerFixture>();
+
+            if (attribute is not null)
+            {
+                GenerateFromType(type, attribute.Scope);
+            }
+        }
+
+        private void GenerateFromType(Type type, FlexiFixtureScope scope)
+        {
+            object? instance = null;
             foreach (var method in type.GetMethods())
             {
                 var attr = method.GetCustomAttribute<FlexiHandlerAttribute>();
 
                 if (attr is not null)
                 {
-                    // assert the return type is invalid. 
                     ValidateMethod(method);
+                    instance = GetSuitableInstance(scope, instance);
+                    var del = GetDelegate(method, ref instance);
 
-                    DelegateMap.Add(attr.HandlerName, GetDelegate(method));
+                    _delegateMap.Add(attr.HandlerName, new() { Delegate = del, Instance = instance! });
                 }
             }
         }
 
-        public void Generate(Assembly source)
+        public void AddAssembly(Assembly source)
         {
             if (source is null) throw new ArgumentNullException(nameof(source));
-            foreach (Type t in source.ExportedTypes
-                .Where(t => t.GetCustomAttribute<FlexiHandlerFixture>() is not null))
-            {
-                GenerateFromType(t);
-            }
+            _assemblies.Add(source);
         }
 
-        public void Generate(Type type)
+        public void AddType(Type type)
         {
             if (type is null) throw new ArgumentNullException(nameof(type));
-            GenerateFromType(type);
+            _types.Add(type);
+        }
+
+        public IDictionary<string, FlexiHandlerSite> Build()
+        {
+            foreach (var asm in _assemblies)
+            {
+                foreach (Type t in asm.ExportedTypes)
+                { 
+                    GenerateFromType(t);
+                }
+            }
+            foreach (var type in _types)
+            {
+                GenerateFromType(type);
+            }
+            return _delegateMap;
         }
     }
 }
