@@ -27,7 +27,6 @@ namespace core
             _delegateMap = new Dictionary<string, FlexiHandlerSite>();
         }
 
-
         private static void ValidateMethod(MethodInfo method)
         {
             if (method.IsAbstract)
@@ -111,7 +110,7 @@ namespace core
             _types.Add(type);
         }
 
-        public IDictionary<string, FlexiHandlerSite> Build()
+        public FlexiHandlerCollection Build()
         {
             foreach (var asm in _assemblies)
             {
@@ -124,7 +123,7 @@ namespace core
             {
                 GenerateFromType(type);
             }
-            return _delegateMap;
+            return new(_delegateMap);
         }
     }
 }

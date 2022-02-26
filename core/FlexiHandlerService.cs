@@ -16,7 +16,7 @@ public interface IFlexiHandlerService
 
 public class FlexiHandlerService : IFlexiHandlerService
 {
-    private readonly IDictionary<string, FlexiHandlerSite> _handlers;
+    private readonly FlexiHandlerCollection _handlers;
 
     public FlexiHandlerService(
         IEnumerable<Assembly> assemblies,
