@@ -2,16 +2,9 @@
 using flexiservice;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-using static flexiservice.FlexiRequest;
 
 namespace core;
 
@@ -21,49 +14,51 @@ public interface IFlexiHandlerService
     FlexiResponse Get(string target, string request);
 }
 
-public class FlexiHandlerService
+public class FlexiHandlerService : IFlexiHandlerService
 {
-    private readonly FlexiHandlerBuilder _builder = new();
+    private readonly IDictionary<string, FlexiHandlerSite> _handlers;
 
     public FlexiHandlerService(
         IEnumerable<Assembly> assemblies,
         IEnumerable<System.Type> types)
     {
+        FlexiHandlerBuilder builder = new();
         foreach (var asm in assemblies)
         {
-            _builder.AddAssembly(asm);
+            builder.AddAssembly(asm);
         }
         foreach (var t in types)
         {
-            _builder.AddType(t);
+            builder.AddType(t);
         }
+        _handlers = builder.Build();
     }
 
-    //public FlexiResponse Get(string target, string request)
-    //{
-    //    if (_builder.DelegateMap.TryGetValue(target, out var site))
-    //    {
-    //        var response = site.Delegate(request);
+    public FlexiResponse Get(string target, string request)
+    {
+        if (_handlers.TryGetValue(target, out var site))
+        {
+            var response = site.Delegate(request);
 
-    //        Debug.Assert(response.Value is not null);
+            Debug.Assert(response.Value is not null);
 
-    //        return new FlexiResponse { JSON = JsonSerializer.Serialize(response.AsT0) };
-    //    }
-    //    throw new NoSuchHandlerException(target);
-    //}
+            return new FlexiResponse { JSON = JsonSerializer.Serialize(response.AsT0) };
+        }
+        throw new NoSuchHandlerException(target);
+    }
 
-    //public FlexiResponse Get(string target, Any request)
-    //{
-    //    if (_builder.DelegateMap.TryGetValue(target, out var site))
-    //    {
-    //        var response = site.Delegate(request);
+    public FlexiResponse Get(string target, Any request)
+    {
+        if (_handlers.TryGetValue(target, out var site))
+        {
+            var response = site.Delegate(request);
 
-    //        Debug.Assert(response.Value is IMessage);
+            Debug.Assert(response.Value is IMessage);
 
-    //        return new FlexiResponse { Any = Any.Pack(response.AsT1) };
-    //    }
-    //    throw new NoSuchHandlerException(target);
-    //}
+            return new FlexiResponse { Any = Any.Pack(response.AsT1) };
+        }
+        throw new NoSuchHandlerException(target);
+    }
 
 
 

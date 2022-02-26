@@ -1,4 +1,7 @@
+using core;
+using server.Handlers;
 using server.Services;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddGrpc();
+builder.Services.AddScoped<IFlexiHandlerService, FlexiHandlerService>(ctx => new FlexiHandlerService(Array.Empty<Assembly>(), new[] { typeof(SomeHandlers)}));
 
 var app = builder.Build();
 

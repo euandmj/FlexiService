@@ -25,7 +25,7 @@ public class FlexiHandlerBuilderTests
 
         var val = builder.Build().First().Value;
 
-        val.Delegate(new FlexiRequest());
+        val.Delegate("");
     }
 
 

@@ -1,5 +1,8 @@
 ﻿using core;
 using flexiservice;
+using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
+using OneOf;
 using System.Text.Json;
 
 namespace server.Handlers;
@@ -13,37 +16,26 @@ public class SomeHandlers
         public string LastName { get; set; }
     }
 
-    [FlexiHandler("handlerJson", FlexiHandlerScope.Lifetime)]
-    public FlexiResponse HandlerJson(FlexiRequest request)
+    [FlexiHandler("handlerJson")]
+    public OneOf<object, IMessage> HandlerJson(OneOf<string, Any> request)
     {
-        var obj = request.PayloadCase switch
-        {
-            FlexiRequest.PayloadOneofCase.JSON => JsonSerializer.Deserialize<ExampleStruct>(request.JSON),
-            _ => throw new Exception()
-        };
-        var fn = obj.FirstName + " foo";
-        var ln = obj.LastName + " foo";
+        var obj = JsonSerializer.Deserialize<ExampleStruct>(request.AsT0);
 
+        obj.FirstName += " foo";
+        obj.LastName += " foo";
 
-        return new FlexiResponse { JSON = JsonSerializer.Serialize(obj) };
-
-
+        return obj;
     }
 
-    [FlexiHandler("handlerAny", FlexiHandlerScope.Lifetime)]
-    public FlexiResponse HandlerAny(FlexiRequest request)
+    [FlexiHandler("handlerAny")]
+    public OneOf<object, IMessage> HandlerAny(OneOf<string, Any> request)
     {
-        var obj = request.PayloadCase switch
-        {
-            FlexiRequest.PayloadOneofCase.Any => request.Any.Unpack<ExampleMessage>(),
-            _ => throw new Exception()
-        };
-        var fn = obj.FirstName + " foo";
-        var ln = obj.LastName + " foo";
+        var b = new ExampleMessage();
+        var obj = request.AsT1.Unpack<ExampleMessage>();
+        obj.FirstName += " foo";
+        obj.LastName +=" foo";
 
-
-        return new FlexiResponse { JSON = JsonSerializer.Serialize(obj) };
-
+        return obj;
     }
 
 

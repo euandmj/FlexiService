@@ -1,4 +1,5 @@
 ﻿using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
 using OneOf;
 
 namespace core;
@@ -40,7 +41,7 @@ public enum FlexiFixtureScope
     PerInstance
 }
 
-public delegate OneOf<object, IMessage> FlexiHandlerDelegate(OneOf<string, IMessage> request);
+public delegate OneOf<object, IMessage> FlexiHandlerDelegate(OneOf<string, Any> request);
 //public delegate FlexiResponse FlexiHandlerDelegate(FlexiRequest request);
 
 

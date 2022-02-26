@@ -1,7 +1,6 @@
 ﻿using core;
 using flexiservice;
 using Grpc.Core;
-using server.Handlers;
 using static flexiservice.FlexiRequest;
 
 namespace server.Services
@@ -36,7 +35,6 @@ namespace server.Services
              * serialize value
              * return value
             */
-
             var response = request.PayloadCase switch
             {
                 PayloadOneofCase.JSON   => _service.Get(request.Target, request.JSON),
