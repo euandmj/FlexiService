@@ -16,20 +16,21 @@ public interface IFlexiHandlerService
 
 public class FlexiHandlerService : IFlexiHandlerService
 {
-    private readonly FlexiHandlerCollection _handlers;
+    private readonly HandlerSiteCollection _handlers;
 
     public FlexiHandlerService(
         IEnumerable<Assembly> assemblies,
         IEnumerable<System.Type> types)
     {
-        FlexiHandlerBuilder builder = new();
+        // TODO!
+        IFlexiHandlerBuilder builder = new FlexiHandlerBuilder();
         foreach (var asm in assemblies)
         {
-            builder.AddAssembly(asm);
+            builder.Add(asm);
         }
         foreach (var t in types)
         {
-            builder.AddType(t);
+            builder.Add(t);
         }
         _handlers = builder.Build();
     }

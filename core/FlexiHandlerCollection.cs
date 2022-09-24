@@ -2,11 +2,11 @@
 
 namespace core;
 
-public class FlexiHandlerCollection : IReadOnlyCollection<KeyValuePair<string, FlexiHandlerSite>>, IEnumerable<KeyValuePair<string, FlexiHandlerSite>>, IReadOnlyDictionary<string, FlexiHandlerSite>
+public class HandlerSiteCollection : IReadOnlyCollection<KeyValuePair<string, FlexiHandlerSite>>, IEnumerable<KeyValuePair<string, FlexiHandlerSite>>, IReadOnlyDictionary<string, FlexiHandlerSite>
 {
     private readonly IDictionary<string, FlexiHandlerSite> _handlers;
 
-    internal FlexiHandlerCollection(IDictionary<string, FlexiHandlerSite> from)
+    internal HandlerSiteCollection(IDictionary<string, FlexiHandlerSite> from)
     {
         _handlers = from;
     }

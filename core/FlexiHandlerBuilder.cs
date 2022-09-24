@@ -16,7 +16,7 @@ namespace core
         }
     }
 
-    public class FlexiHandlerBuilder
+    internal class FlexiHandlerBuilder : IFlexiHandlerBuilder
     {
         private readonly IDictionary<string, FlexiHandlerSite> _delegateMap;
         private readonly HashSet<Assembly> _assemblies = new();
@@ -98,24 +98,24 @@ namespace core
             }
         }
 
-        public void AddAssembly(Assembly source)
+        public void Add(Assembly assembly)
         {
-            if (source is null) throw new ArgumentNullException(nameof(source));
-            _assemblies.Add(source);
+            if (assembly is null) throw new ArgumentNullException(nameof(assembly));
+            _assemblies.Add(assembly);
         }
 
-        public void AddType(Type type)
+        public void Add(Type type)
         {
             if (type is null) throw new ArgumentNullException(nameof(type));
             _types.Add(type);
         }
 
-        public FlexiHandlerCollection Build()
+        public HandlerSiteCollection Build()
         {
             foreach (var asm in _assemblies)
             {
                 foreach (Type t in asm.ExportedTypes)
-                { 
+                {
                     GenerateFromType(t);
                 }
             }
