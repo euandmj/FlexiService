@@ -42,6 +42,8 @@ public enum FlexiFixtureScope
 }
 
 public delegate OneOf<object, IMessage> FlexiHandlerDelegate(OneOf<string, Any> request);
+public delegate object FlexiHandlerDelegateJSON(string request);
+public delegate IMessage FlexiHandlerDelegateAny(Any request);
 //public delegate FlexiResponse FlexiHandlerDelegate(FlexiRequest request);
 
 

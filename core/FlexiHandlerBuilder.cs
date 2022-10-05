@@ -2,20 +2,6 @@
 
 namespace core
 {
-    public struct FlexiHandlerSite : IDisposable
-    {
-        public object Instance;
-        public FlexiHandlerDelegate Delegate;
-
-        public void Dispose()
-        {
-            if (Instance is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
-        }
-    }
-
     public class FlexiHandlerBuilder
     {
         private readonly IDictionary<string, FlexiHandlerSite> _delegateMap;
@@ -43,7 +29,20 @@ namespace core
             }
         }
 
-        private static FlexiHandlerDelegate GetDelegate(MethodInfo method, ref object? instance)
+        private static bool TryCreateHandler<T>(
+            object instance,
+            MethodInfo method,
+            out T? handler) where T : System.Delegate
+        {
+            handler =  Delegate.CreateDelegate(
+                typeof(T),
+                instance,
+                method,
+                throwOnBindFailure: false) as T;
+            return handler is not null;
+        }
+
+        private static FlexiHandlerSite GetDelegate(MethodInfo method, ref object? instance)
         {
             instance ??= Activator.CreateInstance(method.DeclaringType!);
 
@@ -51,13 +50,25 @@ namespace core
             {
                 throw new Exception("instance cannot be null");
             }
+            if (TryCreateHandler<FlexiHandlerDelegateJSON>(instance, method, out var jsonHandler))
+            {
+                
+            }
+            else 
+            {
+                var anySuccess = TryCreateHandler<FlexiHandlerDelegateAny>(instance, method, out var anyHandler);
+                if (!anySuccess)
+                {
+                }
+            }
+            
 
-            var target = Delegate.CreateDelegate(
-                typeof(FlexiHandlerDelegate),
-                instance,
-                method) as FlexiHandlerDelegate ?? throw new InvalidProgramException($"Failed to create delegate from {method}");
+            //var target = Delegate.CreateDelegate(
+            //    typeof(FlexiHandlerDelegate),
+            //    instance,
+            //    method) as FlexiHandlerDelegate ?? throw new InvalidProgramException($"Failed to create delegate from {method}");
 
-            return target;
+            //return target;
         }
 
         private object? GetSuitableInstance(FlexiFixtureScope scope, object? localCache)
@@ -93,7 +104,7 @@ namespace core
                     instance = GetSuitableInstance(scope, instance);
                     var del = GetDelegate(method, ref instance);
 
-                    _delegateMap.Add(attr.HandlerName, new() { Delegate = del, Instance = instance! });
+                    //_delegateMap.Add(attr.HandlerName, new() { Delegate = del, Instance = instance! });
                 }
             }
         }
